@@ -1,5 +1,5 @@
 from pathlib import Path
-
+from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -13,7 +13,7 @@ SECRET_KEY = 'django-insecure-oxlslny5rc(_k09ee(n_5$w2#avuzi4q9cb^qn$c1mh%v4b(&s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.0.2.2', 'localhost']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -30,6 +30,19 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 ]
 
+REST_FRAMEWORK = {
+    'NON_FIELD_ERRORS_KEY': 'error',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
+
+
+# rest_framework_simplejwt
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

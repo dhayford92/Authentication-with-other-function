@@ -2,9 +2,10 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import BaseUserManager, PermissionsMixin, AbstractBaseUser
 from rest_framework_simplejwt.tokens import RefreshToken
-from django_rest_passwordreset.signals import reset_password_token_created
-from django.core.mail import send_mail
-from django.dispatch import receiver
+
+import random
+from datetime import timedelta
+from django.utils import timezone
 
 
 class UserManger(BaseUserManager):
@@ -68,3 +69,25 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     class Meta:
         db_table = 'users'
+        
+
+
+class OtpCode(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=5, blank=True)
+    expiration_time = models.DateTimeField(auto_now_add=False)
+    
+    def save(self, *args, **kwargs):
+        
+        number_list = [i for i in range(10)]
+        code_items = []
+        for i in range(4):
+            num = random.choice(number_list)
+            code_items.append(num)
+        code_string = "".join(str(item) for item in code_items)
+        self.code = code_string
+        expiration_time = timezone.now() + timedelta(minutes=1, seconds=35)
+        self.expiration_time = expiration_time
+        super().save(*args, **kwargs)
+        
+

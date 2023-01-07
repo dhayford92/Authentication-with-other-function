@@ -1,11 +1,15 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, permissions
 from django.contrib.auth import authenticate, logout
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-from .models import User
+from .models import OtpCode, User
 from .serializers import LoginSerializer
+from datetime import timedelta
+from django.utils import timezone
+import requests
+import json
 
 
 
@@ -42,3 +46,62 @@ class GoogleLogin(GenericAPIView):
             return Response({'message': 'Invalid Credentails'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+
+
+class EmailLogin(GenericAPIView):
+    
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        
+        user = authenticate(email=email, password=password)
+        
+        if user != None:
+            serializer = LoginSerializer(user)
+            optcode, created = OtpCode.objects.get_or_create(user=user)
+            expiration_time = timezone.now() + timedelta(minutes=1, seconds=30)
+            optcode.expiration_time = expiration_time
+            optcode.save()
+            
+            # url = "https://devp-sms03726-api.hubtel.com/v1/messages/send"
+
+            # payload = json.dumps({
+            #     "from": "233240209723",
+            #     "to": f"233{optcode.user.phone}",
+            #     "content": f"{optcode.code}"
+            # })
+            
+            # headers = {
+            #     'Authorization': 'Basic b21qdmN5ano6dG54a215ZWI=',
+            #     'Content-Type': 'application/json'
+            # }
+
+            # response = requests.request("POST", url, headers=headers, data=payload)
+            
+            
+            return Response(serializer.data, status=200)
+        else:
+            return Response({'message': 'Invalid Credentails'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+
+
+class OptVerify(GenericAPIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def post(self, request):
+        user = request.user
+        code = request.data['code']
+        
+        optuser = OtpCode.objects.filter(user=user).first()
+        
+        if optuser:
+            if optuser.code == str(code):
+                if optuser.expiration_time < timezone.now():
+                    return Response({'message': 'Code has expired'}, status=status.HTTP_400_BAD_REQUEST)
+                else:    
+                    return Response({'message': 'Account verified'}, status=200)
+            else:
+                return Response({'message': 'Wrong code'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'message': 'User code not found'}, status=status.HTTP_204_NO_CONTENT)
+            
