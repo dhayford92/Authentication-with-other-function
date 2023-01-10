@@ -8,8 +8,6 @@ from .models import OtpCode, User
 from .serializers import LoginSerializer
 from datetime import timedelta
 from django.utils import timezone
-import requests
-import json
 import firebase_admin
 from firebase_admin import credentials, messaging
 
