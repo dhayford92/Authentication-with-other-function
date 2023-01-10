@@ -10,6 +10,8 @@ from datetime import timedelta
 from django.utils import timezone
 import requests
 import json
+import firebase_admin
+from firebase_admin import credentials, messaging
 
 
 
@@ -105,3 +107,19 @@ class OptVerify(GenericAPIView):
         else:
             return Response({'message': 'User code not found'}, status=status.HTTP_204_NO_CONTENT)
             
+            
+            
+#---sending notification through firebase
+def send_notification(request):
+    # Obtain the server key from your Firebase project settings
+    server_key = 'AAAA8pkXGD8:APA91bFyH2v5XZP4lEPURdk7QcdH0KGhsZMLcsdj7k7eNLnhGa25saf8kI___25lqJRsyaGvSUUkky-Aj8QtXts0Ecg5GZTUEfFTyQgMEd1oOk0pO1VqoCC6bf62__hiAwPVeDgQu6I2'
+    cred = credentials.Certificate(server_key)
+    firebase_admin.initialize_app(cred)
+
+    # Set up the notification payload and target device token``
+    notification = messaging.Notification(title='My notification', body='Hello, world!')
+    device_token = 'your_device_token'
+
+    # Send the notification
+    message = messaging.Message(notification=notification, token=device_token)
+    messaging.send(message)
